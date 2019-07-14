@@ -20,7 +20,11 @@
 
 package wrap
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
 // ContextError interface describes the simple type that is able to provide a
 // textual context as well as the cause explaining the underlying error.
@@ -47,12 +51,67 @@ func (e *wrappedError) Cause() error {
 	return e.cause
 }
 
+// ListOfErrors interface describes a list of errors with additional context
+// information with an explanation.
+type ListOfErrors interface {
+	Context() string
+	Errors() []error
+}
+
+// wrappedErrors describes a list of errors with context information
+type wrappedErrors struct {
+	context string
+	errors  []error
+}
+
+func (e *wrappedErrors) Error() string {
+	tmp := make([]string, len(e.errors))
+	for i, err := range e.errors {
+		tmp[i] = fmt.Sprintf("- %s", err.Error())
+	}
+
+	return fmt.Sprintf("%s:\n%s", e.context, strings.Join(tmp, "\n"))
+}
+
+func (e *wrappedErrors) Context() string {
+	return e.context
+}
+
+func (e *wrappedErrors) Errors() []error {
+	return e.errors
+}
+
 // Error creates an error with additional context
 func Error(err error, context string) error {
-	return &wrappedError{context, err}
+	switch {
+	case err == nil:
+		return errors.New(context)
+
+	default:
+		return &wrappedError{context, err}
+	}
 }
 
 // Errorf creates an error with additional formatted context
 func Errorf(err error, format string, a ...interface{}) error {
-	return &wrappedError{fmt.Sprintf(format, a...), err}
+	return Error(err, fmt.Sprintf(format, a...))
+}
+
+// Errors creates a list of errors with additional context
+func Errors(errs []error, context string) error {
+	switch {
+	case errs == nil:
+		return errors.New(context)
+
+	case len(errs) == 1:
+		return Error(errs[0], context)
+
+	default:
+		return &wrappedErrors{context, errs}
+	}
+}
+
+// Errorsf creates a list of errors with additional formatted context
+func Errorsf(errors []error, format string, a ...interface{}) error {
+	return Errors(errors, fmt.Sprintf(format, a...))
 }
