@@ -3,7 +3,7 @@ module github.com/gonvenience/wrap
 go 1.20
 
 require (
-	github.com/onsi/ginkgo/v2 v2.17.2
+	github.com/onsi/ginkgo/v2 v2.17.3
 	github.com/onsi/gomega v1.33.1
 )
 
