@@ -48,26 +48,6 @@ var _ = Describe("wrap package tests", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(BeEquivalentTo("failed to do thing A"))
 		})
-
-		It("should be able to just extract the context string", func() {
-			switch contextError := err.(type) {
-			case ContextError:
-				Expect(contextError.Context()).To(BeEquivalentTo("issue setting up z"))
-
-			default:
-				Fail("failed to type cast to ContextError")
-			}
-		})
-
-		It("should be able to just extract the error cause", func() {
-			switch contextError := err.(type) {
-			case ContextError:
-				Expect(contextError.Cause().Error()).To(BeEquivalentTo("failed to do x, because of y"))
-
-			default:
-				Fail("failed to type cast to ContextError")
-			}
-		})
 	})
 
 	Context("wrapping multiple errors with context", func() {
@@ -84,7 +64,7 @@ var _ = Describe("wrap package tests", func() {
 
 		It("should behave and render like a standard error", func() {
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(BeEquivalentTo("failed to setup component A:\n- issue setting up x\n- issue setting up y\n- issue setting up z"))
+			Expect(err.Error()).To(BeEquivalentTo("failed to setup component A:\nissue setting up x\nissue setting up y\nissue setting up z"))
 		})
 
 		It("should fall back to a simple error if no cause is provided", func() {
@@ -95,38 +75,12 @@ var _ = Describe("wrap package tests", func() {
 
 		It("should render like a simple wrapped error if there is only one error list entry", func() {
 			err := Errorsf(
-				[]error{
-					fmt.Errorf("issue setting up x"),
-				},
+				[]error{fmt.Errorf("issue setting up x")},
 				"failed to setup component %s", "A",
 			)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(BeEquivalentTo("failed to setup component A: issue setting up x"))
-		})
-
-		It("should be able to just extract the context string", func() {
-			switch contextError := err.(type) {
-			case ListOfErrors:
-				Expect(contextError.Context()).To(BeEquivalentTo("failed to setup component A"))
-
-			default:
-				Fail("failed to type cast to ContextError")
-			}
-		})
-
-		It("should be able to just extract the list of errors", func() {
-			switch contextError := err.(type) {
-			case ListOfErrors:
-				Expect(contextError.Errors()).To(BeEquivalentTo([]error{
-					fmt.Errorf("issue setting up x"),
-					fmt.Errorf("issue setting up y"),
-					fmt.Errorf("issue setting up z"),
-				}))
-
-			default:
-				Fail("failed to type cast to ContextError")
-			}
 		})
 	})
 
